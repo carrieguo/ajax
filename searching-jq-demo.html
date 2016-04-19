@@ -131,6 +131,8 @@
 					}
 				}
 			};
+			document.getElementById("search-suggest").style.top = getElementTop(document.getElementById("search-form")) + document.getElementById("search-form").offsetHeight;
+			document.getElementById("search-suggest").style.left = getElementLeft(document.getElementById("search-form"));
 		});
 	}
 </script>
