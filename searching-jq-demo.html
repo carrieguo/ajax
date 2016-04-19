@@ -24,7 +24,7 @@
  	<div class="search-box">
  	<div class="logo"></div>
  	
-	 	<form class="search-form" action="https://cn.bing.com/search" target="_blank">
+	 	<form id="search-form" class="search-form" action="https://cn.bing.com/search" target="_blank">
 	 		<input type="text" class="search-text" name="q" id="search_input"/>
 	 		<input type="submit" class="search-button" value=""/>
 	 	</form>
@@ -36,30 +36,103 @@
 		 <li> 搜索内容 </li>
 	 </ul>
  </div>
- <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
 <script>
-	$("#search_input").bind('keyup',function(){
-		var searchTxt = $('.search-text').val();
-		$.get('http://api.bing.com/qsonhs.aspx?q='+searchTxt,function(msg){
-			var msg = msg.AS.Results[0].Suggests;
-			var htmlTxt = '';
-			for(var i=0; i<msg.length; i++){
-				htmlTxt += '<li>'+msg[i].Txt+'</li>';
+	var getElementTop = function(element){
+		var actualTop = element.offsetTop;
+		var parent = element.offsetParent;
+		while(parent!=null){
+			actualTop += parent.offsetTop;
+			parent = parent.offsetParent;
+		}
+		return actualTop;
+	};
+	var getElementLeft = function(element){
+		var actualLeft = element.offsetLeft;
+		var parent = element.offsetParent;
+		while(parent!=null){
+			actualLeft += parent.offsetLeft;
+			parent = parent.offsetParent;
+		}
+		return actualLeft;
+	};
+	//addEventListener适用于非IE浏览器
+	//attachEvent适用于IE浏览器
+	var inputTxt = document.getElementById("search_input");
+	if(inputTxt.addEventListener){
+		inputTxt.addEventListener('keyup',function(){
+			var request;
+			if(window.XMLHttpRequest){
+				request=new window.XMLHttpRequest();
+			}else{
+				request=new ActiveXObject("Microsoft.XMLHttp");
 			}
-			$("#search-result").html(htmlTxt);
-			$("#search-suggest").show().css({
-				top:$('.search-form').offset().top+$('.search-form').outerHeight(),
-				left:$('.search-form').offset().left
-			});
-		},'json');
-	$(document).bind('click',function(){
-		$("#search-suggest").hide();
-		$(document).delegate('li','click',function(){
-			var liTxt=$(this).text();
-			location.href='http://cn.bing.com/search?q='+liTxt;
+			var inputKey = inputTxt.value;
+			request.open("GET","http://api.bing.com/qsonhs.aspx?q="+inputKey,true);
+			request.send();
+			request.onreadystatechange = function(){
+				/*0 未初始化，还没有调用open()方法
+				 * 1 载入，已调用send()方法，正在发送请求
+				 * 2 载入完成，send()方法完成，已收到全部响应内容
+				 * 3 解析，正在解析响应内容
+				 * 4 完成，响应内容解析完成，可以在客户端调用了*/
+				//oAjax.readyState 浏览器和服务器，进行到哪一步了
+				if(request.readyState==4){
+					if(request.status==200){
+						var msg = JSON.parse(request.responseText);
+						msg = msg.AS.Results[0].Suggests;
+						var htmlTxt = '';
+						for(var i=0; i<msg.length; i++){
+							htmlTxt += '<li>'+msg[i].Txt+'</li>';
+						}
+						document.getElementById("search-suggest").style.display="block";
+						document.getElementById("search-suggest").innerHTML=htmlTxt;
+					}
+					else {
+						alert('失败'+request.status);
+					}
+				}
+			};
+			document.getElementById("search-suggest").style.top = getElementTop(document.getElementById("search-form")) + document.getElementById("search-form").offsetHeight;
+			document.getElementById("search-suggest").style.left = getElementLeft(document.getElementById("search-form"));
+		},false);
+	}
+	else if(inputTxt.attachEvent){
+		inputTxt.attachEvent('onkeyup',function(){
+			var request;
+			if(window.XMLHttpRequest){
+				request=new window.XMLHttpRequest();
+			}else{
+				request=new ActiveXObject("Microsoft.XMLHttp");
+			}
+			var inputKey = inputTxt.value;
+
+			request.open("GET","http://api.bing.com/qsonhs.aspx?q="+inputKey,true);
+			request.send();
+			request.onreadystatechange = function(){
+				/*0 未初始化，还没有调用open()方法
+				 * 1 载入，已调用send()方法，正在发送请求
+				 * 2 载入完成，send()方法完成，已收到全部响应内容
+				 * 3 解析，正在解析响应内容
+				 * 4 完成，响应内容解析完成，可以在客户端调用了*/
+				//oAjax.readyState 浏览器和服务器，进行到哪一步了
+				if(request.readyState==4){
+					if(request.status==200){
+						var msg = JSON.parse(request.responseText);
+						msg = msg.AS.Results[0].Suggests;
+						var htmlTxt = '';
+						for(var i=0; i<msg.length; i++){
+							htmlTxt += '<li>'+msg[i].Txt+'</li>';
+						}
+						document.getElementById("search-suggest").style.display="block";
+						document.getElementById("search-suggest").innerHTML=htmlTxt;
+					}
+					else {
+						alert('失败'+request.status);
+					}
+				}
+			};
 		});
-	});
-	})
+	}
 </script>
 </body>
 </html>
